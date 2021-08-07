@@ -220,7 +220,7 @@ local GetStreetSpeedLimitEnglishMPH = setmetatable
 	},
 	{
 		__index	=	function(--[[Table, Key]])
-						return 0
+						return 500.01
 					end,
 		__call	=	function(Table, String)
 						return Table[String]
