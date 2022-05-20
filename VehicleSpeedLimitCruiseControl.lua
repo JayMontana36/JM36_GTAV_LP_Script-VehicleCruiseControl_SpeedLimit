@@ -228,67 +228,58 @@ local GetStreetSpeedLimitEnglishMPH = setmetatable
 	}
 )
 
-local _GetStreetNameFromHashKey = GetStreetNameFromHashKey
-local GetStreetNameFromHashKey = setmetatable
-(
-	{},
-	{
-		__index	=	function(Table, Key)
-						local Name = _GetStreetNameFromHashKey(Key)
-						Table[Key] = Name
-						return Name
-					end,
-		__call	=	function(Table, String)
-						return Table[String]
-					end,
-	}
-)
-local ToggleKey, RunTimeDelay, NextRunTime, LimitSpeed, LastVehicle, VehicleEligible
-local VehicleSpeedLimitCruiseControl VehicleSpeedLimitCruiseControl =
-{
+
+
+local ToggleKey
+
+JM36.CreateThread(function()
+	
+	local DisableControlAction, GetEntitySpeedVector, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlJustPressed
+		= DisableControlAction, GetEntitySpeedVector, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlJustPressed
+	GetStreetNameFromHashKey = require("CreateCacheSimpleForFunction")(GetStreetNameFromHashKey)
+	
+	local VehicleEligible, LimitSpeed, LastVehicle
+	
+	local Player = Info.Player
+	local Vehicle = Player.Vehicle
+	
+	local yield = JM36.yield
+	while true do
+		if Vehicle.Id ~= LastVehicle and Vehicle.IsIn and Vehicle.IsOp then
+			LimitSpeed = false
+			LastVehicle = Vehicle.Id
+			local Vehicle_Type = Vehicle.Type
+			VehicleEligible = Vehicle_Type.Bike or Vehicle_Type.Car or Vehicle_Type.Quadbike
+		end
+		
+		if VehicleEligible and Vehicle.IsIn and Vehicle.IsOp then
+			if IsControlJustPressed(0, ToggleKey) then
+				LimitSpeed = not LimitSpeed
+			end
+			if LimitSpeed then
+				local SpeedLimit
+				do
+					local Player_Coords = Player.Coords
+					SpeedLimit = GetStreetSpeedLimitEnglishMPH(GetStreetNameFromHashKey(GetStreetNameAtCoord(Player_Coords.x, Player_Coords.y, Player_Coords.z, 0, 0)))
+				end
+				if GetEntitySpeedVector(LastVehicle, true).y > SpeedLimit then
+					DisableControlAction(27, 71, true)
+				end
+			end
+		end
+		yield()
+	end
+end)
+
+return{
 	init	=	function()
-					local pairs, tonumber
-						= pairs, tonumber
-					for Key, Value in pairs(GetStreetSpeedLimitEnglishMPH) do
-						GetStreetSpeedLimitEnglishMPH[Key] = Value/2.23694
-					end
-					local Config = configFileRead("VehicleSpeedLimitCruiseControl.ini")
-					ToggleKey = tonumber(Config.ToggleKey)
-					RunTimeDelay = tonumber(Config.RunTimeDelay)
-					Config = nil
-					NextRunTime = 0
-				end,
-	loop	=	function(Info)
-					local Vehicle = Info.Player.Vehicle
-					if Vehicle.IsIn then
-						if Vehicle.Id ~= LastVehicle then
-							VehicleSpeedLimitCruiseControl.stop()
-							LimitSpeed = false
-							LastVehicle = Vehicle.Id
-							local Vehicle_Type = Vehicle.Type
-							VehicleEligible = Vehicle_Type.Bicycle or Vehicle_Type.Bike or Vehicle_Type.Car or Vehicle_Type.Quadbike
+					do
+						local pairs = pairs
+						local GetStreetSpeedLimitEnglishMPH = GetStreetSpeedLimitEnglishMPH
+						for Key, Value in pairs(GetStreetSpeedLimitEnglishMPH) do
+							GetStreetSpeedLimitEnglishMPH[Key] = Value/2.23694
 						end
 					end
-					
-					if VehicleEligible and Vehicle.IsIn then
-						if IsControlJustPressed(0, ToggleKey) then
-							LimitSpeed = not LimitSpeed
-							if not LimitSpeed then
-								VehicleSpeedLimitCruiseControl.stop()
-							end
-						end
-						local Time = Info.Time
-						if LimitSpeed and Time >= NextRunTime then
-							NextRunTime = Time+RunTimeDelay
-							local Player_Coords = Info.Player.Coords
-							SetEntityMaxSpeed(LastVehicle, GetStreetSpeedLimitEnglishMPH(GetStreetNameFromHashKey(GetStreetNameAtCoord(Player_Coords.x, Player_Coords.y, Player_Coords.z, 0, 0))))
-						end
-					end
-				end,
-	stop	=	function()
-					if LastVehicle ~= nil and DoesEntityExist(LastVehicle) then
-						SetEntityMaxSpeed(LastVehicle, 500.01)
-					end
-				end,
+					ToggleKey = tonumber(configFileRead("VehicleSpeedLimitCruiseControl.ini").ToggleKey or 73)
+				end
 }
-return VehicleSpeedLimitCruiseControl
