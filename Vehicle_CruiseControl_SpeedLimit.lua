@@ -234,8 +234,8 @@ local ToggleKey
 
 JM36.CreateThread(function()
 	
-	local DisableControlAction, GetEntitySpeedVector, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlJustPressed
-		= DisableControlAction, GetEntitySpeedVector, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlJustPressed
+	local DisableControlAction, GetEntitySpeedVector, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlPressed, IsControlJustPressed
+		= DisableControlAction, GetEntitySpeedVector, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlPressed, IsControlJustPressed
 	GetStreetNameFromHashKey = require("CreateCacheSimpleForFunction")(GetStreetNameFromHashKey)
 	
 	local VehicleEligible, LimitSpeed, LastVehicle
@@ -253,7 +253,7 @@ JM36.CreateThread(function()
 		end
 		
 		if VehicleEligible and Vehicle.IsIn and Vehicle.IsOp then
-			if IsControlJustPressed(0, ToggleKey) then
+			if IsControlJustPressed(0, ToggleKey) and (ToggleKey ~= 73 or not IsControlPressed(27, 68)) then
 				LimitSpeed = not LimitSpeed
 			end
 			if LimitSpeed then
