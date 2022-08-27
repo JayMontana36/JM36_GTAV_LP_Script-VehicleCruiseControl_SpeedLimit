@@ -298,7 +298,7 @@ JM36.CreateThread(function()
 		= DisableControlAction, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlPressed, IsControlJustPressed
 	GetStreetNameFromHashKey = require("CreateCacheSimpleForFunction")(GetStreetNameFromHashKey)
 	
-	local ToggleKey = tonumber(configFileRead("VehicleSpeedLimitCruiseControl.ini").ToggleKey or 73) or 73
+	local ToggleKey = tonumber(configFileRead("Vehicle_CruiseControl_SpeedLimit.ini").ToggleKey or 73) or 73
 	local NotUsingDefault = ToggleKey ~= 73
 	local VehicleEligible, LastVehicle
 	while true do
