@@ -294,12 +294,26 @@ JM36.CreateThread(function()
 end)
 
 JM36.CreateThread(function()
-	local DisableControlAction, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlPressed, IsControlJustPressed
-		= DisableControlAction, GetStreetNameAtCoord, GetStreetNameFromHashKey, IsControlPressed, IsControlJustPressed
+	local DisableControlAction, GetStreetNameAtCoord, GetStreetNameFromHashKey
+		= DisableControlAction, GetStreetNameAtCoord, GetStreetNameFromHashKey
 	GetStreetNameFromHashKey = require("CreateCacheSimpleForFunction")(GetStreetNameFromHashKey)
 	
-	local ToggleKey = tonumber(configFileRead("Vehicle_CruiseControl_SpeedLimit.ini").ToggleKey or 73) or 73
-	local NotUsingDefault = ToggleKey ~= 73
+	local ControlJustPressed = coroutine.wrap(function()
+		local IsUsingKeyboard, IsControlJustPressed, IsControlPressed
+			= IsUsingKeyboard, IsControlJustPressed, IsControlPressed
+		
+		local ToggleKey = tonumber(configFileRead("Vehicle_CruiseControl_SpeedLimit.ini").ToggleKey or 73) or 73
+		local NotUsingDefault = ToggleKey ~= 73
+		local coroutine_yield = coroutine.yield
+		while true do
+			if not IsUsingKeyboard(2) then
+				coroutine_yield(IsControlJustPressed(2, ToggleKey) and not (NotUsingDefault or IsControlPressed(27, 68)))
+			else
+				coroutine_yield(IsControlJustPressed(2, ToggleKey))
+			end
+		end
+	end)
+	
 	local VehicleEligible, LastVehicle
 	while true do
 		if Vehicle.IsIn then
@@ -317,7 +331,7 @@ JM36.CreateThread(function()
 			end
 			
 			if VehicleEligible and Vehicle.IsOp then
-				if IsControlJustPressed(0, ToggleKey) and not (NotUsingDefault or IsControlPressed(27, 68)) then
+				if ControlJustPressed() then
 					LimitSpeed = not LimitSpeed
 				end
 				if LimitSpeed then
